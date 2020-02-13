@@ -28,6 +28,8 @@ if( PKG_CONFIG_FOUND AND NOT FFTW_ROOT )
 endif()
 #Check whether to search static or dynamic libs
 set( CMAKE_FIND_LIBRARY_SUFFIXES_SAV ${CMAKE_FIND_LIBRARY_SUFFIXES} )
+
+
 if( ${FFTW_USE_STATIC_LIBS} )
   set( CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX} )
 else()
@@ -72,7 +74,6 @@ else()
   # before the system defaults (recommended in cmake docs).
   # Without the second find_library,
   # we will not look for system default paths when fftw3.pc misses /usr/lib
-
   find_library(
     FFTW_LIB
     NAMES "fftw3"

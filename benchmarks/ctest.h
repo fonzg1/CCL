@@ -161,8 +161,14 @@ void assert_dbl_far(double exp, double real, double tol, const char* caller, int
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __linux__ 
 #include <sys/time.h>
 #include <unistd.h>
+#elif _WIN32
+#include <windows.h>
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 

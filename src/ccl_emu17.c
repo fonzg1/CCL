@@ -8,8 +8,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
+#include <math.h>
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_linalg.h>
@@ -21,8 +24,24 @@
 #include "ccl_emu17_params.h"
 #include "ccl_emu17.h"
 
+
 // Sizes of stuff
-static int m[2] = {111, 36}, neta=2808, peta[2]={7, 28}, rs=8, p=8;
+// Made as defines because static arrays are not 'const' enough on windows (C99 is not supported by MSVS)
+#define M0 111
+#define M1 36
+static int m[2] = { M0, M1 };
+
+#define NETA 2808
+static int neta = NETA;
+
+#define PETA0 7
+#define PETA1 28
+static int peta[2] = { PETA0, PETA1 };
+
+#define RS 8
+
+#define P 8
+static int p = P;
 
 // Kriging basis computed by emuInit
 // Sizes of each basis will be peta[ee] and m[ee]
@@ -148,17 +167,17 @@ static int emuInit() {
 void ccl_pkemu(double *xstar, int sizeofystar, double *ystar, int* status, ccl_cosmology* cosmo) {
   static double inited=0;
   int ee, i, j, k;
-  double wstar[peta[0]+peta[1]];
-  double Sigmastar[2][peta[1]][m[0]];
-  double ystaremu[neta];
-  double ybyz[rs];
+  double wstar[PETA0 + PETA1];
+  double Sigmastar[2][PETA1][M0];
+  double ystaremu[NETA];
+  double ybyz[RS];
   double logc;
-  double xstarstd[p];
+  double xstarstd[P];
   int zmatch;
   gsl_spline *zinterp = NULL;
 
   if (*status == 0) {
-    zinterp = gsl_spline_alloc(gsl_interp_cspline, rs);
+    zinterp = gsl_spline_alloc(gsl_interp_cspline, RS);
     if (zinterp == NULL) {
       *status = CCL_ERROR_MEMORY;
       ccl_cosmology_set_status_message(
@@ -241,10 +260,10 @@ void ccl_pkemu(double *xstar, int sizeofystar, double *ystar, int* status, ccl_c
   }
 
   if (*status == 0) {
-    if((xstar[p] < z[0]) || (xstar[p] > z[rs-1])) {
+    if((xstar[p] < z[0]) || (xstar[p] > z[RS-1])) {
         ccl_cosmology_set_status_message(cosmo,
                 "ccl_pkemu(): z must be between %f and %f.\n",
-                z[0], z[rs-1]);
+                z[0], z[RS-1]);
         *status = CCL_ERROR_EMULATOR_BOUND;
         ccl_raise_warning(*status, cosmo->status_message);
     }
@@ -308,9 +327,9 @@ void ccl_pkemu(double *xstar, int sizeofystar, double *ystar, int* status, ccl_c
 
     // First check to see if the requested z is one of the training z.
     zmatch = -1;
-    for(i=0; i<rs; i++) {
+    for(i=0; i<RS; i++) {
         if(xstar[p] == z[i]) {
-            zmatch = rs-i-1;
+            zmatch = RS-i-1;
         }
     }
 
@@ -318,10 +337,10 @@ void ccl_pkemu(double *xstar, int sizeofystar, double *ystar, int* status, ccl_c
     if(zmatch == -1) {
       for(i=0; i<NK_EMU; i++) {
         if(*status == 0) {
-          for(j=0; j<rs; j++) {
-            ybyz[rs-j-1] = ystaremu[j*NK_EMU+i];
+          for(j=0; j<RS; j++) {
+            ybyz[RS-j-1] = ystaremu[j*NK_EMU+i];
           }
-          if (gsl_spline_init(zinterp, z, ybyz, rs) != GSL_SUCCESS) {
+          if (gsl_spline_init(zinterp, z, ybyz, RS) != GSL_SUCCESS) {
             *status = CCL_ERROR_SPLINE;
           } else {
             ystar[i] = gsl_spline_eval(zinterp, xstar[p], NULL);

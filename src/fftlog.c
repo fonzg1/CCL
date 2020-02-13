@@ -1,4 +1,11 @@
 #include <stdlib.h>
+
+/**
+ * Enable math.h/cmath constants on Windows
+*/
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
 #include <math.h>
 
 #include <fftw3.h>
@@ -9,31 +16,46 @@
 #include "fftlog.h"
 
 #ifndef M_PI
-    #define M_PI 3.14159265358979323846
+  #define M_PI 3.14159265358979323846
 #endif
 
 /* This code is FFTLog, which is described in arXiv:astro-ph/9905191 */
 
-static double complex lngamma_fftlog(double complex z)
+static complex_double lngamma_fftlog(complex_double z)
 {
   gsl_sf_result lnr, phi;
   gsl_sf_lngamma_complex_e(creal(z), cimag(z), &lnr, &phi);
-  return lnr.val + I*phi.val;
+#ifdef __linux__ 
+  return lnr.val + I * phi.val;
+#elif _WIN32
+  complex_double retval = { lnr.val, phi.val };
+  return retval;
+#endif
 }
 
-static double complex gamma_fftlog(double complex z)
+static complex_double gamma_fftlog(complex_double z)
 {
   return cexp(lngamma_fftlog(z));
 }
 
-static double complex polar (double r, double phi)
+static complex_double polar (double r, double phi)
 {
-  return (r*cos(phi) +I*(r*sin(phi)));
+#ifdef __linux__ 
+  return (r * cos(phi) + I * (r * sin(phi)));
+#elif _WIN32
+  complex_double retval = { r * cos(phi),  (r * sin(phi)) };
+  return retval;
+#endif
 }
 
 static void lngamma_4(double x, double y, double* lnr, double* arg)
 {
-  double complex w = lngamma_fftlog(x+y*I);
+#ifdef __linux__ 
+    complex_double w = lngamma_fftlog(x + y * I);
+#elif _WIN32
+  complex_double tmp = { x,  y };
+  complex_double w = lngamma_fftlog(tmp);
+#endif
   if(lnr) *lnr = creal(w);
   if(arg) *arg = cimag(w);
 }
@@ -53,7 +75,7 @@ static double goodkr(int N, double mu, double q, double L, double kr)
   return kr;
 }
 
-void compute_u_coefficients(int N, double mu, double q, double L, double kcrc, double complex u[])
+void compute_u_coefficients(int N, double mu, double q, double L, double kcrc, complex_double u[])
 {
   double y = M_PI/L;
   double k0r0 = kcrc * exp(-L);
@@ -80,19 +102,26 @@ void compute_u_coefficients(int N, double mu, double q, double L, double kcrc, d
 
   for(int m = N/2+1; m < N; m++)
     u[m] = conj(u[N-m]);
-  if((N % 2) == 0)
-    u[N/2] = (creal(u[N/2]) + I*0.0);
+  if ((N % 2) == 0) {
+#ifdef __linux__ 
+    u[N / 2] = (creal(u[N / 2]) + I * 0.0);
+#elif _WIN32
+    complex_double tmp = { creal(u[N / 2]),  0.0f };
+    u[N / 2] = tmp;
+#endif
+  }
+
 }
 
-void fht(int N, const double r[], const double complex a[], double k[], double complex b[], double mu,
-         double q, double kcrc, int noring, double complex* u)
+void fht(int N, const double r[], const complex_double a[], double k[], complex_double b[], double mu,
+         double q, double kcrc, int noring, complex_double* u)
 {
   double L = log(r[N-1]/r[0]) * N/(N-1.);
-  double complex* ulocal = NULL;
+  complex_double* ulocal = NULL;
   if(u == NULL) {
     if(noring)
       kcrc = goodkr(N, mu, q, L, kcrc);
-    ulocal = malloc (sizeof(complex double)*N);
+    ulocal = malloc (sizeof(complex_double)*N);
     compute_u_coefficients(N, mu, q, L, kcrc, ulocal);
     u = ulocal;
   }
@@ -101,14 +130,20 @@ void fht(int N, const double r[], const double complex a[], double k[], double c
   fftw_plan forward_plan = fftw_plan_dft_1d(N, (fftw_complex*) a, (fftw_complex*) b,  -1, FFTW_ESTIMATE);
   fftw_plan reverse_plan = fftw_plan_dft_1d(N, (fftw_complex*) b, (fftw_complex*) b, +1, FFTW_ESTIMATE);
   fftw_execute(forward_plan);
-  for(int m = 0; m < N; m++)
+  for (int m = 0; m < N; m++) {
+#ifdef __linux__ 
     b[m] *= u[m] / (double)(N);       // divide by N since FFTW doesn't normalize the inverse FFT
+#elif _WIN32
+    complex_double tmp = { creal(u[m]) / (double)N, cimag(u[m]) / (double)N };
+    b[m] = _Cmulcc(b[m], tmp);
+#endif
+  }
   fftw_execute(reverse_plan);
   fftw_destroy_plan(forward_plan);
   fftw_destroy_plan(reverse_plan);
 
   /* Reverse b array */
-  double complex tmp;
+  complex_double tmp;
   for(int n = 0; n < N/2; n++) {
     tmp = b[n];
     b[n] = b[N-n-1];
@@ -127,14 +162,27 @@ void fht(int N, const double r[], const double complex a[], double k[], double c
 void fftlog_ComputeXi2D(double bessel_order,int N,const double l[],const double cl[],
 			double th[], double xi[])
 {
-  double complex* a = malloc(sizeof(complex double)*N);
-  double complex* b = malloc(sizeof(complex double)*N);
+  complex_double* a = malloc(sizeof(complex_double)*N);
+  complex_double* b = malloc(sizeof(complex_double)*N);
 
-  for(int i=0;i<N;i++)
-    a[i]=l[i]*cl[i];
+  for (int i = 0; i < N; i++) {
+#ifdef __linux__ 
+    a[i] = l[i] * cl[i];
+#elif _WIN32
+      complex_double tmp = { l[i] * cl[i], 0.0f };
+      a[i] = tmp;
+#endif
+  }
+  
   fht(N,l,a,th,b,bessel_order,0,1,1,NULL);
-  for(int i=0;i<N;i++)
-    xi[i]=creal(b[i]/(2*M_PI*th[i]));
+
+  for (int i = 0; i < N; i++) {
+#ifdef __linux__ 
+    xi[i] = creal(b[i] / (2 * M_PI * th[i]));
+#elif _WIN32
+    xi[i] = creal(b[i]) / (2 * M_PI * th[i]);
+#endif
+  } 
 
   free(a);
   free(b);
@@ -143,15 +191,28 @@ void fftlog_ComputeXi2D(double bessel_order,int N,const double l[],const double 
 void fftlog_ComputeXiLM(double l, double m, int N, const double k[], const double pk[],
 			double r[], double xi[])
 {
-  double complex* a = malloc(sizeof(complex double)*N);
-  double complex* b = malloc(sizeof(complex double)*N);
+  complex_double* a = malloc(sizeof(complex_double)*N);
+  complex_double* b = malloc(sizeof(complex_double)*N);
 
-  for(int i = 0; i < N; i++)
+  for (int i = 0; i < N; i++) {
+#ifdef __linux__ 
     a[i] = pow(k[i], m - 0.5) * pk[i];
-  fht(N, k, a, r, b, l + 0.5, 0, 1, 1, NULL);
-  for(int i = 0; i < N; i++)
-    xi[i] = creal(pow(2*M_PI*r[i], -(m-0.5)) * b[i]);
+#elif _WIN32
+    complex_double tmp = { pow(k[i], m - 0.5) * pk[i], 0.0f };
+    a[i] = tmp;
+#endif
+  }
 
+  fht(N, k, a, r, b, l + 0.5, 0, 1, 1, NULL);
+  
+  for (int i = 0; i < N; i++) {
+#ifdef __linux__ 
+    xi[i] = creal(pow(2 * M_PI * r[i], -(m - 0.5)) * b[i]);
+#elif _WIN32
+    xi[i] = pow(2 * M_PI * r[i], -(m - 0.5)) * creal(b[i]);
+#endif
+  }
+  
   free(a);
   free(b);
 }

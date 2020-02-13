@@ -49,7 +49,14 @@ void fftlog_ComputeXiLM(double l, double m, int N, const double k[],  const doub
  *   th[0] = 1/l[N-1], ..., th[N-1] = 1/l[0]. */
 void fftlog_ComputeXi2D(double bessel_order,int N,const double l[],const double cl[],
 			double th[], double xi[]);
+
 #include <complex.h>
+
+#ifdef __linux__ 
+typedef double complex double_complex;
+#elif _WIN32
+typedef _Dcomplex complex_double;
+#endif
 
 /* Compute the discrete Hankel transform of the function a(r).  See the FFTLog
  * documentation (or the Fortran routine of the same name in the FFTLog
@@ -57,8 +64,8 @@ void fftlog_ComputeXi2D(double bessel_order,int N,const double l[],const double 
  * If u is NULL, the transform coefficients will be computed anew and discarded
  * afterwards.  If you plan on performing many consecutive transforms, it is
  * more efficient to pre-compute the u coefficients. */
-void fht(int N,  const double r[],  const double complex a[], double k[], double complex b[], double mu,
-         double q, double kcrc, int noring, double complex* u);
+void fht(int N,  const double r[],  const complex_double a[], double k[], complex_double b[], double mu,
+         double q, double kcrc, int noring, complex_double* u);
 //         double q = 0, double kcrc = 1, bool noring = true, double complex* u = NULL);
 
 /* Pre-compute the coefficients that appear in the FFTLog implementation of
@@ -66,7 +73,7 @@ void fht(int N,  const double r[],  const double complex a[], double k[], double
  * same as for the function fht().  The parameter L is defined (for whatever
  * reason) to be N times the logarithmic spacing of the input array, i.e.
  *   L = N * log(r[N-1]/r[0])/(N-1) */
-void compute_u_coefficients(int N, double mu, double q, double L, double kcrc, double complex u[]);
+void compute_u_coefficients(int N, double mu, double q, double L, double kcrc, complex_double u[]);
 
 
 #endif // FFTLOG_H
