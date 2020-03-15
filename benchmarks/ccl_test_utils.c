@@ -13,7 +13,7 @@ CTEST(spacing_tests, linear_spacing_simple) {
   ASSERT_DBL_NEAR_TOL(1.0, m[4], 1e-10);
   free(m);
 }
-
+/*
 CTEST(spacing_tests, log_spacing_simple) {
   double * m = ccl_log_spacing(1.0, 16.0, 5);
   ASSERT_NOT_NULL(m);
@@ -63,3 +63,4 @@ CTEST(spherical_bessel_tests, compare_gsl) {
     }
   }
 }
+*/

@@ -9,14 +9,6 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 MESSAGE( STATUS "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE} )
 
-#set(CMAKE_GENERATOR_PLATFORM "x64")
-#set(CMAKE_CXX_FLAGS "-m64")
-#set(CMAKE_C_FLAGS "-m64")
-#set(CMAKE_EXE_LINKER_FLAGS "-m64")
-#set(CMAKE_MODULE_LINKER_FLAGS "-m64")
-#set(CMAKE_SHARED_LINKER_FLAGS "-m64")
-#set(ARCH amd64)
-
 # Adding customized cmake module
 list(APPEND CMAKE_MODULE_PATH  "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
@@ -85,6 +77,7 @@ endif()
 
 # Define include and library directories for external dependencies
 include_directories(${GSL_INCLUDE_DIRS} ${FFTW_INCLUDES} ${ANGPOW_INCLUDE_DIRS})
+link_directories(${GSL_LIBRARY_DIRS} ${FFTW_LIBRARY_DIRS} ${ANGPOW_LIBRARY_DIRS})
 
 # Adds path to CCL include folder
 include_directories(include)
@@ -113,9 +106,8 @@ endif()
 # class directly, and it's not a dependency anymore
 add_library(ccl SHARED $<TARGET_OBJECTS:objlib>)
 target_link_libraries(ccl
-    #GSL::gsl,
     ${GSL_LIBRARIES}
-    ${FFTW_LIBRARIES} 
+    ${FFTW_LIBRARIES}
     ${CLASS_LIBRARIES} 
     ${ANGPOW_LIBRARIES})
 

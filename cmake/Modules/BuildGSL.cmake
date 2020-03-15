@@ -1,10 +1,9 @@
 include(ExternalProject)
 
-
 # The conda package of GSL has problems on Windows.
 # See: https://github.com/conda-forge/gsl-feedstock/issues/50
 # Download and compile it from sources
-if (WIN32)    
+if (WIN32)
     set(GSL_VERSION 2.4)
     set(GSLMD5 c27ad8325d16fbddd530b3829f9c135b)
 
@@ -17,9 +16,15 @@ if (WIN32)
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/extern
         BUILD_IN_SOURCE 1)
 
-    set(GSL_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/extern/lib/)
-    set(GSL_LIBRARIES ${GSL_LIBRARY_DIRS}/gsl.lib ${GSL_LIBRARY_DIRS}/gslcblas.lib)
-    set(GSL_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/extern/include/)
+    if(MSVC)
+        set(GSL_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/extern/lib/)
+        set(GSL_LIBRARIES ${GSL_LIBRARY_DIRS}/gsl.lib ${GSL_LIBRARY_DIRS}/gslcblas.lib)
+        set(GSL_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/extern/include/)
+    else()
+        set(GSL_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/extern/lib/)
+        set(GSL_LIBRARIES ${GSL_LIBRARY_DIRS}/libgsl.a ${GSL_LIBRARY_DIRS}/libgslcblas.a)
+        set(GSL_INCLUDE_DIRS ${CMAKE_BINARY_DIR}/extern/include/)
+    endif()
        
 else()
     find_package(GSL 2.1)

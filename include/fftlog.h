@@ -52,10 +52,10 @@ void fftlog_ComputeXi2D(double bessel_order,int N,const double l[],const double 
 
 #include <complex.h>
 
-#ifdef __linux__ 
-typedef double complex double_complex;
-#elif _WIN32
+#ifdef _MSC_VER
 typedef _Dcomplex complex_double;
+#else
+typedef double complex complex_double;
 #endif
 
 /* Compute the discrete Hankel transform of the function a(r).  See the FFTLog
