@@ -8,6 +8,7 @@
 #endif
 #include <math.h>
 
+#include <complex.h>
 #include <fftw3.h>
 
 #include <gsl/gsl_sf_result.h>
@@ -25,11 +26,11 @@ static complex_double lngamma_fftlog(complex_double z)
 {
   gsl_sf_result lnr, phi;
   gsl_sf_lngamma_complex_e(creal(z), cimag(z), &lnr, &phi);
-#ifdef __linux__ 
-  return lnr.val + I * phi.val;
-#elif _WIN32
+#ifdef _MSC_VER
   complex_double retval = { lnr.val, phi.val };
   return retval;
+#else
+  return lnr.val + I * phi.val;
 #endif
 }
 
@@ -40,21 +41,21 @@ static complex_double gamma_fftlog(complex_double z)
 
 static complex_double polar (double r, double phi)
 {
-#ifdef __linux__ 
-  return (r * cos(phi) + I * (r * sin(phi)));
-#elif _WIN32
+#ifdef _MSC_VER
   complex_double retval = { r * cos(phi),  (r * sin(phi)) };
   return retval;
+#else
+  return (r * cos(phi) + I * (r * sin(phi)));
 #endif
 }
 
 static void lngamma_4(double x, double y, double* lnr, double* arg)
 {
-#ifdef __linux__ 
-    complex_double w = lngamma_fftlog(x + y * I);
-#elif _WIN32
+#ifdef _MSC_VER
   complex_double tmp = { x,  y };
   complex_double w = lngamma_fftlog(tmp);
+#else
+    complex_double w = lngamma_fftlog(x + y * I);
 #endif
   if(lnr) *lnr = creal(w);
   if(arg) *arg = cimag(w);
@@ -103,11 +104,11 @@ void compute_u_coefficients(int N, double mu, double q, double L, double kcrc, c
   for(int m = N/2+1; m < N; m++)
     u[m] = conj(u[N-m]);
   if ((N % 2) == 0) {
-#ifdef __linux__ 
-    u[N / 2] = (creal(u[N / 2]) + I * 0.0);
-#elif _WIN32
+#ifdef _MSC_VER
     complex_double tmp = { creal(u[N / 2]),  0.0f };
     u[N / 2] = tmp;
+#else
+    u[N / 2] = (creal(u[N / 2]) + I * 0.0);
 #endif
   }
 
@@ -131,11 +132,11 @@ void fht(int N, const double r[], const complex_double a[], double k[], complex_
   fftw_plan reverse_plan = fftw_plan_dft_1d(N, (fftw_complex*) b, (fftw_complex*) b, +1, FFTW_ESTIMATE);
   fftw_execute(forward_plan);
   for (int m = 0; m < N; m++) {
-#ifdef __linux__ 
-    b[m] *= u[m] / (double)(N);       // divide by N since FFTW doesn't normalize the inverse FFT
-#elif _WIN32
+#ifdef _MSC_VER
     complex_double tmp = { creal(u[m]) / (double)N, cimag(u[m]) / (double)N };
     b[m] = _Cmulcc(b[m], tmp);
+#else
+    b[m] *= u[m] / (double)(N);       // divide by N since FFTW doesn't normalize the inverse FFT
 #endif
   }
   fftw_execute(reverse_plan);
@@ -166,21 +167,21 @@ void fftlog_ComputeXi2D(double bessel_order,int N,const double l[],const double 
   complex_double* b = malloc(sizeof(complex_double)*N);
 
   for (int i = 0; i < N; i++) {
-#ifdef __linux__ 
-    a[i] = l[i] * cl[i];
-#elif _WIN32
+#ifdef _MSC_VER
       complex_double tmp = { l[i] * cl[i], 0.0f };
       a[i] = tmp;
+#else
+    a[i] = l[i] * cl[i];
 #endif
   }
   
   fht(N,l,a,th,b,bessel_order,0,1,1,NULL);
 
   for (int i = 0; i < N; i++) {
-#ifdef __linux__ 
-    xi[i] = creal(b[i] / (2 * M_PI * th[i]));
-#elif _WIN32
+#ifdef _MSC_VER
     xi[i] = creal(b[i]) / (2 * M_PI * th[i]);
+#else
+    xi[i] = creal(b[i] / (2 * M_PI * th[i]));
 #endif
   } 
 
@@ -195,21 +196,21 @@ void fftlog_ComputeXiLM(double l, double m, int N, const double k[], const doubl
   complex_double* b = malloc(sizeof(complex_double)*N);
 
   for (int i = 0; i < N; i++) {
-#ifdef __linux__ 
-    a[i] = pow(k[i], m - 0.5) * pk[i];
-#elif _WIN32
+#ifdef _MSC_VER
     complex_double tmp = { pow(k[i], m - 0.5) * pk[i], 0.0f };
     a[i] = tmp;
+#else
+    a[i] = pow(k[i], m - 0.5) * pk[i];
 #endif
   }
 
   fht(N, k, a, r, b, l + 0.5, 0, 1, 1, NULL);
   
   for (int i = 0; i < N; i++) {
-#ifdef __linux__ 
-    xi[i] = creal(pow(2 * M_PI * r[i], -(m - 0.5)) * b[i]);
-#elif _WIN32
+#ifdef _MSC_VER
     xi[i] = pow(2 * M_PI * r[i], -(m - 0.5)) * creal(b[i]);
+#else
+    xi[i] = creal(pow(2 * M_PI * r[i], -(m - 0.5)) * b[i]);
 #endif
   }
   

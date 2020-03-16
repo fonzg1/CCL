@@ -123,7 +123,7 @@ if (UNIX)
     target_link_libraries(ccl m)
 endif (UNIX)
 
-# Builds the test suite
+# Buildsa the test suite
 add_executable(check_ccl ${TEST_SRC})
 target_link_libraries(check_ccl ccl)
 

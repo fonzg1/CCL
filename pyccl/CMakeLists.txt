@@ -5,13 +5,17 @@ include(BuildSWIG)
 include(UseSWIG)
 #set (UseSWIG_TARGET_NAME_PREFERENCE STANDARD)
 
-find_package(PythonLibsNew ${PYTHON_VERSION})
+find_package(PythonLibsNew ${PYTHON_VERSION} REQUIRED)
 find_package(NumPy)
 include_directories(BEFORE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIRS})
 
 # We also build a static library only for linking the python module
 add_library(ccl_static STATIC $<TARGET_OBJECTS:objlib>)
-target_link_libraries(ccl_static ${GSL_LIBRARIES} ${CLASS_LIBRARIES} ${ANGPOW_LIBRARIES} ${FFTW_LIBRARIES} m)
+
+target_link_libraries(ccl_static ${GSL_LIBRARIES} ${CLASS_LIBRARIES} ${ANGPOW_LIBRARIES} ${FFTW_LIBRARIES})
+if (UNIX)
+    target_link_libraries(ccl_static m)
+endif()
 add_dependencies(ccl_static ccl)
 
 # Adds these extra depencies before building SWIG interface, to ensure that SWIG
@@ -29,10 +33,18 @@ else()
 endif()
 swig_link_libraries(ccllib ccl_static)
 
+
 if(APPLE)
     # Unpleasant subtelty for linking on osx
     set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-else(APPLE)
+else()
     swig_link_libraries(ccllib ${PYTHON_LIBRARIES})
+    #message(FATAL_ERROR "OKAY FOUND: " ${PYTHON_LIBRARIES})
+    #message(FATAL_ERROR "OKAY PYTHON " ${PYTHON_VERSION})
 endif()
-set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES SUFFIX .so)
+
+if(WIN32)
+    set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES SUFFIX .dll)
+else()
+    set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES SUFFIX .so)
+endif()
