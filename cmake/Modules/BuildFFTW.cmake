@@ -16,6 +16,8 @@ if(NOT FFTW_FOUND)
     set(FFTW_USE_STATIC_LIBS TRUE)
 
     if (WIN32)
+        include(cmake/Modules/Windows-GNU.cmake)
+
         message(STATUS "FFTW not found, downloading a precompiled library")
 
         # Download precompiled libraries.
@@ -28,47 +30,34 @@ if(NOT FFTW_FOUND)
 
         if(MSVC)
             # To link against FFTW under Visual Studio, we need to create .lib using lib.exe
-            #ExternalProject_Add(FFTW
-            #        PREFIX FFTW
-            #        SOURCE_DIR ${FFTW_DIR}
-            #        URL ${FFTW_URL}
-            #        URL_MD5 ${FFTW_MD5}
-            #        DOWNLOAD_NO_PROGRESS 1
-            #CONFIGURE_COMMAND ";"
-            # BUILD_COMMAND ";"
-            #INSTALL_COMMAND "lib /def:${FFTW_DIR}/libfftw3-3.def"
-            #BUILD_IN_SOURCE 1)
+            ExternalProject_Add(FFTW
+                    PREFIX FFTW
+                    SOURCE_DIR ${FFTW_DIR}
+                    URL ${FFTW_URL}
+                    URL_MD5 ${FFTW_MD5}
+                    DOWNLOAD_NO_PROGRESS 1
+                    CONFIGURE_COMMAND lib /def:libfftw3-3.def
+                    BUILD_COMMAND ""
+                    INSTALL_COMMAND ""
+                    BUILD_IN_SOURCE 1)
 
-            #add_custom_command(
-            #        OUTPUT
-            #        ${FFTW_DIR}/libfftw3-3.lib
-            #        COMMAND
-            #        lib /def:${FFTW_DIR}/libfftw3-3.def
-            #        DEPENDS
-            #        ${FFTW_DIR}/libfftw3-3.def
-            #)
-
-            #add_custom_target(FFTW DEPENDS ${FFTW_DIR}/extracted/libfftw3-3.lib)
-
-            add_custom_target(FFTW)
-            set(FFTW_LIBRARY_DIRS ${FFTW_DIR})
             set(FFTW_INCLUDES  ${FFTW_DIR})
             set(FFTW_LIBRARIES ${FFTW_DIR}/libfftw3-3.lib)
         else()
-            # To link using GNU toolchains, just extract the archive and take precompiled libraries as is
+            # To link using GNU toolchains, an *.a file using dlltool
             ExternalProject_Add(FFTW
                                 PREFIX FFTW
                                 SOURCE_DIR ${FFTW_DIR}
                                 URL ${FFTW_URL}
                                 URL_MD5 ${FFTW_MD5}
                                 DOWNLOAD_NO_PROGRESS 1
-                                CONFIGURE_COMMAND ""
+                                CONFIGURE_COMMAND dlltool -d libfftw3-3.def -l libfftw3-3.a
                                 BUILD_COMMAND ""
                                 INSTALL_COMMAND ""
                                 BUILD_IN_SOURCE 1)
 
             set(FFTW_INCLUDES  ${FFTW_DIR})
-            set(FFTW_LIBRARIES ${FFTW_DIR}/libfftw3-3.dll)
+            set(FFTW_LIBRARIES ${FFTW_DIR}/libfftw3-3.a)
         endif()
     else()
         ExternalProject_Add(FFTW

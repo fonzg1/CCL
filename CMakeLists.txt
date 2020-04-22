@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.2)
 set(CMAKE_C_COMPILER_WORKS 1)
 set(CMAKE_CXX_COMPILER_WORKS 1)
 
+if (WIN32)
+    set(DCMAKE_SH="CMAKE_SH-NOTFOUND")
+endif()
+
 if (NOT CMAKE_BUILD_TYPE)
     message(STATUS "No build type selected, default to Release")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -105,7 +109,6 @@ endif()
 # class directly, and it's not a dependency anymore
 add_library(ccl SHARED $<TARGET_OBJECTS:objlib>)
 target_link_libraries(ccl
-    #GSL::gsl,
     ${GSL_LIBRARIES}
     ${FFTW_LIBRARIES} 
     ${CLASS_LIBRARIES} 
@@ -117,7 +120,16 @@ endif (UNIX)
 
 # Buildsa the test suite
 add_executable(check_ccl ${TEST_SRC})
-target_link_libraries(check_ccl ccl)
+
+if(WIN32)
+    get_filename_component(_vs_bin_path "${CMAKE_LINKER}" DIRECTORY)
+    target_link_directories(check_ccl PRIVATE ${PROJECT_BINARY_DIR})
+    message(INFO "VSBINPATH " ${_vs_bin_path})
+    message(INFO "Link CHECK CCL libraries:"  ${GSL_LIBRARIES} ${CLASS_LIBRARIES} ${ANGPOW_LIBRARIES} ${FFTW_LIBRARIES})
+    target_link_libraries(check_ccl libccl.dll ${GSL_LIBRARIES}  ${FFTW_LIBRARIES} ${CLASS_LIBRARIES} ${ANGPOW_LIBRARIES})
+else()
+    target_link_libraries(check_ccl ccl)
+endif()
 
 # Builds example folder in place, make this optional
 add_subdirectory(examples "${CMAKE_CURRENT_SOURCE_DIR}/examples" EXCLUDE_FROM_ALL)

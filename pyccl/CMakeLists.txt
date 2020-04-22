@@ -12,6 +12,7 @@ include_directories(BEFORE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIRS})
 # We also build a static library only for linking the python module
 add_library(ccl_static STATIC $<TARGET_OBJECTS:objlib>)
 
+message(INFO "Link libraries:"  ${GSL_LIBRARIES} ${CLASS_LIBRARIES} ${ANGPOW_LIBRARIES} ${FFTW_LIBRARIES})
 target_link_libraries(ccl_static ${GSL_LIBRARIES} ${CLASS_LIBRARIES} ${ANGPOW_LIBRARIES} ${FFTW_LIBRARIES})
 if (UNIX)
     target_link_libraries(ccl_static m)
@@ -42,7 +43,7 @@ if(APPLE)
     # Unpleasant subtelty for linking on osx
     set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 else()
-    swig_link_libraries(ccllib ${PYTHON_LIBRARIES} ${NUMPY_INCLUDE_DIRS})
+    swig_link_libraries(ccllib ${PYTHON_LIBRARIES})
 endif()
 
 if(WIN32)

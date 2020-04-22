@@ -26,24 +26,31 @@ def _compile_ccl():
     # Windows build
     if os.name == 'nt':
         _check_cmake()
-        _check_mingw()
+        #_check_mingw()
+
+        use_msvc = True
 
         if call(["cmake", 
                 "-H.", "-Bbuild", 
-                "-G", "MinGW Makefiles",
+                #"-G", "MinGW Makefiles",
                 "-DCMAKE_BUILD_TYPE=Release",
-                #"-DCMAKE_GENERATOR_PLATFORM=x64",
                 "-DPYTHON_VERSION=%d.%d.%d" % (
                     v.major, v.minor, v.micro)]) != 0:
             raise RuntimeError(
                 "Could not run CMake configuration.")
-                
-        if call(["mingw32-make.exe", "-Cbuild", "_ccllib"]) != 0:
+
+        cclpyd_output_dir = "build/pyccl/Release" if use_msvc else "build/pyccl/"
+
+        if call(["msbuild.exe", "build/pyccl/_ccllib.vcxproj", "-p:Configuration=Release"]) != 0:
             raise RuntimeError("Could not build CCL.")
-        
+
+        #if call(["mingw32-make.exe", "-Cbuild", "_ccllib"]) != 0:
+        #    raise RuntimeError("Could not build CCL.")
+
         # Finds the library under its different possible names
-        if os.path.exists("build/pyccl/_ccllib.pyd"):
-            call(["cp", "build/pyccl/_ccllib.pyd", "pyccl/"])
+        pyd_file = os.path.join(cclpyd_output_dir, "_ccllib.pyd")
+        if os.path.exists(pyd_file):
+            call(["cp", pyd_file, "pyccl/"])
         else:
             raise RuntimeError("Could not find wrapper shared library, "
                                "compilation must have failed.")
