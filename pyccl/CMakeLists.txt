@@ -33,18 +33,20 @@ else()
 endif()
 swig_link_libraries(ccllib ccl_static)
 
+#if(WIN32)
+#    swig_link_libraries(ccllib ${FFTW_LIBS})
+#endif()
+
 
 if(APPLE)
     # Unpleasant subtelty for linking on osx
     set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 else()
-    swig_link_libraries(ccllib ${PYTHON_LIBRARIES})
-    #message(FATAL_ERROR "OKAY FOUND: " ${PYTHON_LIBRARIES})
-    #message(FATAL_ERROR "OKAY PYTHON " ${PYTHON_VERSION})
+    swig_link_libraries(ccllib ${PYTHON_LIBRARIES} ${NUMPY_INCLUDE_DIRS})
 endif()
 
 if(WIN32)
-    set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES SUFFIX .dll)
+    set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES SUFFIX .pyd)
 else()
     set_target_properties(${SWIG_MODULE_ccllib_REAL_NAME} PROPERTIES SUFFIX .so)
 endif()

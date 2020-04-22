@@ -28,7 +28,11 @@ def _compile_ccl():
         _check_cmake()
         _check_mingw()
 
-        if call(["cmake", "-H.", "-Bbuild", "-G", "MinGW Makefiles",
+        if call(["cmake", 
+                "-H.", "-Bbuild", 
+                "-G", "MinGW Makefiles",
+                "-DCMAKE_BUILD_TYPE=Release",
+                #"-DCMAKE_GENERATOR_PLATFORM=x64",
                 "-DPYTHON_VERSION=%d.%d.%d" % (
                     v.major, v.minor, v.micro)]) != 0:
             raise RuntimeError(
@@ -38,8 +42,8 @@ def _compile_ccl():
             raise RuntimeError("Could not build CCL.")
         
         # Finds the library under its different possible names
-        if os.path.exists("build/pyccl/_ccllib.dll"):
-            call(["cp", "build/pyccl/_ccllib.dll", "pyccl/"])
+        if os.path.exists("build/pyccl/_ccllib.pyd"):
+            call(["cp", "build/pyccl/_ccllib.pyd", "pyccl/"])
         else:
             raise RuntimeError("Could not find wrapper shared library, "
                                "compilation must have failed.")

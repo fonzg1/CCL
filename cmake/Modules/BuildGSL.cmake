@@ -6,7 +6,7 @@ include(ExternalProject)
 # Download and compile it from sources
 if (WIN32)    
     set(GSL_VERSION 2.4)
-    set(GSLMD5 c27ad8325d16fbddd530b3829f9c135b)
+    set(GSLMD5 7452f685a49ca9a2ded7213b18d29c4d)
 
     message(STATUS "downloading and compiling GSL from source")
     ExternalProject_Add(GSL

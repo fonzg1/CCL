@@ -12,7 +12,7 @@ if(NOT FFTW_FOUND)
     message(STATUS "FFTW not found, downloading and compiling from source")
     set(FFTWVersion 3.3.7)
     set(FFTWUrl http://www.fftw.org/fftw-${FFTWVersion}.tar.gz)
-    set(FFTWMD5 0d5915d7d39b3253c1cc05030d79ac47)
+    set(FFTWMD5 7452f685a49ca9a2ded7213b18d29c4d)
     set(FFTW_USE_STATIC_LIBS TRUE)
 
     if (WIN32)
